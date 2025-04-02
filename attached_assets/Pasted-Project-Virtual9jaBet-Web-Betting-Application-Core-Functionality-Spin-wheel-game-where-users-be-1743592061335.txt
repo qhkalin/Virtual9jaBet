@@ -1,0 +1,109 @@
+Project: Virtual9jaBet - Web Betting Application
+
+Core Functionality: Spin wheel game where users bet on numbers (2-8).
+
+UI/UX:
+- Fully responsive for mobile & desktop.
+- Dark mode support.
+- Smooth animations for spinning, winning, and notifications.
+
+Dashboard:
+- Display user balance at the top.
+- Live, auto-scrolling feed of 300+ simulated withdrawals.
+- Leaderboard showing Top 10 winners.
+- Recent transactions list (deposits, withdrawals, game history).
+
+Spin Mechanics:
+- User selects a number (2-8) and places a bet.
+- Spin animation (5-7 seconds total):
+  - Phase 1: Fast spin (first 3 seconds).
+  - Phase 2: Slowdown (last 2-4 seconds).
+- First spin is always a win. Subsequent spins are randomized.
+- Win condition: Bottle lands on the chosen number.
+- Loss condition: Bottle lands on another number (bet deducted).
+- Sound effects: Spinning (fast to slow), Winning (triumphant chime), Losing (subtle beep).
+- Spin Board Colors:
+  - Board: Deep Blue (#002B5B) or Black (#000000).
+  - Numbers (2-8): White (#FFFFFF) or Bright Yellow (#FFD700) - Use different color and divider line space-between for listed numbers.
+  - Stopping Stick: Bright Red (#FF0000).
+  - Winning Indicator: Gold (#FFD700) with Trophy Animation.
+  - Losing Effect: Slight screen dimming with bold red (#FF0000) "You Lost" text.
+- Display all available numbers (2-8) visibly on the spin.
+
+Deposit System:
+- User enters amount (₦1,000 - ₦500,000).
+- Display company account details:
+  - Account Number: 6100827551
+  - Bank: OPay
+  - Account Name: Virtual9jaBet or OMOBANKE JUMOKE ADEKAYERO
+- "I've made the payment" button -> Progress bar with 20-minute countdown.
+- Admin manually approves deposits.
+- Generate a permanent one-time withdrawal code upon deposit. Send this code to admin (denzelbennie@outlook.com).
+- Admin forwards the withdrawal code to the user manually after verifying the deposit.
+- Once the user enters the correct withdrawal code, their deposit balance should appear instantly.
+
+Withdrawal System:
+- User saves bank details (Bank Name, Account Number, Account Name). Send user's bank info to admin when added.
+- User enters withdrawal amount. Send withdrawal request details to admin (denzelbennie@outlook.com) in this format: {amount; bank name; account; account name; Username; Email; Balance;}.
+- After the user clicks submit, display a "Pending" status for the withdrawal.
+- Display "Payment Withdrawal Confirm" status after 24 hours of withdrawal.
+- Admin processes withdrawals manually within 5 hours.
+
+Settings Page:
+- Update password, email, and profile details.
+- Option to hide balance for privacy.
+
+Email Notifications (SMTP Integration):
+- Signup Confirmation: "Welcome to Virtual9jaBet!"
+- Login Alert: "A new login was detected on your account."
+- Winning Notification: "Congratulations! You won ₦X,XXX."
+- Sender Name: Virtual9JaBet
+- Include site header logo and website logo in emails.
+- SMTP Details: Host=smtp.gmail.com, Port=465, User=coastalloan60@gmail.com, Pass=sphw oizv szzy fpgw
+
+Footer Section:
+- Copyright notice with auto-updating current year.
+- Links to Terms & Conditions, Privacy Policy, and Contact Support.
+
+Full Web Application Features:
+- Fully responsive UI.
+- PWA support via manifest.json (for iOS & Android install).
+- Secure authentication system (scalable to 1M+ users).
+- SMTP integration for email notifications.
+- WebSocket integration for live gameplay updates.
+
+Bonus Features:
+- User signup bonus: ₦2,000 credited to balance (withdrawable after playing at least one match).
+- Referral Code: Option for users to add a referral code during signup. If a valid code is entered, the referrer receives ₦1,500 (withdrawable). Each user should have their own unique referral code on their profile.
+
+Important Notes:
+- Ensure all numbers (2-8) are displayed clearly on the spin wheel.
+Admin Interface (Basic Requirements):
+- Functionality for admin to view and approve pending deposits.
+- Functionality for admin to view and process withdrawal requests.
+- Ability for admin to see user details and transaction history (optional, but helpful).
+
+Security:
+- Implement secure user authentication and password storage.
+- Protect against common web vulnerabilities.
+
+Error Handling:
+- Implement proper error handling for user inputs, network requests, and system processes. Display user-friendly error messages.
+
+Database:
+- Utilize a database to store user accounts, balances, transaction history, game results, and other necessary data.
+
+Technology Stack (Suggestions - adaptable based on Replit AI capabilities):
+- Frontend: HTML, CSS, JavaScript, potentially a framework like React or Vue.js for better structure and interactivity.
+- Backend: Python (with Flask or Django), Node.js (with Express), or any other suitable backend language and framework.
+- Database: PostgreSQL, MySQL, or a NoSQL database like MongoDB.
+
+Deployment:
+- The application should be deployable on Replit.
+
+Additional Considerations:
+- Ensure the live withdrawal feed is visually engaging but does not impact performance.
+- The leaderboard should update dynamically based on user winnings.
+- Consider adding logging for important system events and transactions for debugging and auditing purposes.
+
+Please build this web application based on these specifications. Let me know if you require any further clarification on any of the features.
