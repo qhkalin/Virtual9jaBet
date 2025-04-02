@@ -27,7 +27,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userId = req.user.id;
-      const gameData = insertGameSchema.parse(req.body);
+      // Add userId to the game data before validation
+      const gameData = insertGameSchema.parse({
+        ...req.body,
+        userId
+      });
       
       // Check if user has enough balance
       const user = await storage.getUser(userId);
