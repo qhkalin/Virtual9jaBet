@@ -55,7 +55,11 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{
+      backgroundColor: "#0E2E5C",
+      backgroundImage: "linear-gradient(to bottom, #0E2E5C, #071834)",
+      backgroundAttachment: "fixed"
+    }}>
       <div className="container max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="flex items-center justify-center">
           <Tabs 
@@ -63,49 +67,61 @@ export default function AuthPage() {
             onValueChange={setActiveTab}
             className="w-full max-w-md"
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2" style={{ backgroundColor: "#143668" }}>
+              <TabsTrigger 
+                value="login" 
+                className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#0E2E5C] data-[state=active]:font-bold"
+              >
+                Login
+              </TabsTrigger>
+              <TabsTrigger 
+                value="register" 
+                className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#0E2E5C] data-[state=active]:font-bold"
+              >
+                Register
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
-              <Card>
+              <Card className="border-[#FFD700] border-2 bg-[#0E2E5C]/80 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Login to your account</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">Login to your account</CardTitle>
+                  <CardDescription className="text-gray-300">
                     Enter your credentials to access your account
                   </CardDescription>
                 </CardHeader>
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username" className="text-white">Username</Label>
                       <Input
                         id="username"
                         placeholder="Enter your username"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...loginForm.register("username")}
                       />
                       {loginForm.formState.errors.username && (
-                        <p className="text-sm text-destructive">{loginForm.formState.errors.username.message}</p>
+                        <p className="text-sm text-[#FFD700]">{loginForm.formState.errors.username.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password" className="text-white">Password</Label>
                       <Input
                         id="password"
                         type="password"
                         placeholder="Enter your password"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...loginForm.register("password")}
                       />
                       {loginForm.formState.errors.password && (
-                        <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
+                        <p className="text-sm text-[#FFD700]">{loginForm.formState.errors.password.message}</p>
                       )}
                     </div>
                   </CardContent>
                   <CardFooter>
                     <Button 
                       type="submit" 
-                      className="w-full bg-primary hover:bg-primary/90"
+                      className="w-full bg-[#FFD700] hover:bg-[#E6C200] text-[#0E2E5C] font-bold"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
@@ -123,89 +139,95 @@ export default function AuthPage() {
             </TabsContent>
             
             <TabsContent value="register">
-              <Card>
+              <Card className="border-[#FFD700] border-2 bg-[#0E2E5C]/80 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Create an account</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">Create an account</CardTitle>
+                  <CardDescription className="text-gray-300">
                     Join Virtual9jaBet and get ₦2,000 signup bonus
                   </CardDescription>
                 </CardHeader>
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)}>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
+                      <Label htmlFor="fullName" className="text-white">Full Name</Label>
                       <Input
                         id="fullName"
                         placeholder="Enter your full name"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...registerForm.register("fullName")}
                       />
                       {registerForm.formState.errors.fullName && (
-                        <p className="text-sm text-destructive">{registerForm.formState.errors.fullName.message}</p>
+                        <p className="text-sm text-[#FFD700]">{registerForm.formState.errors.fullName.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
+                      <Label htmlFor="username" className="text-white">Username</Label>
                       <Input
                         id="username"
                         placeholder="Choose a username"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...registerForm.register("username")}
                       />
                       {registerForm.formState.errors.username && (
-                        <p className="text-sm text-destructive">{registerForm.formState.errors.username.message}</p>
+                        <p className="text-sm text-[#FFD700]">{registerForm.formState.errors.username.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email" className="text-white">Email</Label>
                       <Input
                         id="email"
                         type="email"
                         placeholder="Enter your email"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...registerForm.register("email")}
                       />
                       {registerForm.formState.errors.email && (
-                        <p className="text-sm text-destructive">{registerForm.formState.errors.email.message}</p>
+                        <p className="text-sm text-[#FFD700]">{registerForm.formState.errors.email.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password" className="text-white">Password</Label>
                       <Input
                         id="password"
                         type="password"
                         placeholder="Create a password"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...registerForm.register("password")}
                       />
                       {registerForm.formState.errors.password && (
-                        <p className="text-sm text-destructive">{registerForm.formState.errors.password.message}</p>
+                        <p className="text-sm text-[#FFD700]">{registerForm.formState.errors.password.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword" className="text-white">Confirm Password</Label>
                       <Input
                         id="confirmPassword"
                         type="password"
                         placeholder="Confirm your password"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...registerForm.register("confirmPassword")}
                       />
                       {registerForm.formState.errors.confirmPassword && (
-                        <p className="text-sm text-destructive">{registerForm.formState.errors.confirmPassword.message}</p>
+                        <p className="text-sm text-[#FFD700]">{registerForm.formState.errors.confirmPassword.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                      <Label htmlFor="referralCode" className="text-white">Referral Code (Optional)</Label>
                       <Input
                         id="referralCode"
                         placeholder="Enter referral code if you have one"
+                        className="bg-[#143668] text-white border-[#2D5599] focus:border-[#FFD700] focus:ring-[#FFD700]"
                         {...registerForm.register("referralCode")}
                       />
                       {registerForm.formState.errors.referralCode && (
-                        <p className="text-sm text-destructive">{registerForm.formState.errors.referralCode.message}</p>
+                        <p className="text-sm text-[#FFD700]">{registerForm.formState.errors.referralCode.message}</p>
                       )}
                     </div>
                   </CardContent>
                   <CardFooter>
                     <Button 
                       type="submit" 
-                      className="w-full bg-primary hover:bg-primary/90"
+                      className="w-full bg-[#FFD700] hover:bg-[#E6C200] text-[#0E2E5C] font-bold"
                       disabled={registerMutation.isPending}
                     >
                       {registerMutation.isPending ? (
@@ -224,16 +246,16 @@ export default function AuthPage() {
           </Tabs>
         </div>
         
-        <div className="hidden md:flex flex-col justify-center p-6 bg-primary rounded-lg">
+        <div className="hidden md:flex flex-col justify-center p-6 bg-[#143668] rounded-lg border-[#FFD700] border-2">
           <div className="space-y-6 text-white">
-            <h1 className="text-4xl font-bold font-heading">
+            <h1 className="text-5xl font-bold font-heading">
               <span className="text-[#FFD700]">Virtual</span>9ja
               <span className="text-[#FFD700]">Bet</span>
             </h1>
             <p className="text-xl">The premier online betting platform in Nigeria.</p>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="bg-[#FFD700] p-2 rounded-full text-black">
+                <div className="bg-[#FFD700] p-2 rounded-full text-[#0E2E5C]">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
@@ -244,7 +266,7 @@ export default function AuthPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-[#FFD700] p-2 rounded-full text-black">
+                <div className="bg-[#FFD700] p-2 rounded-full text-[#0E2E5C]">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
@@ -255,7 +277,7 @@ export default function AuthPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-[#FFD700] p-2 rounded-full text-black">
+                <div className="bg-[#FFD700] p-2 rounded-full text-[#0E2E5C]">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
