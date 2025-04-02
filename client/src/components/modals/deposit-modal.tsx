@@ -50,7 +50,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<DepositStep>(DepositStep.AMOUNT);
   const [depositId, setDepositId] = useState<number | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState(20 * 60); // 20 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(3 * 60); // 3 minutes in seconds
   
   // Deposit form
   const depositForm = useForm<z.infer<typeof depositSchema>>({
@@ -154,7 +154,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const resetState = () => {
     setCurrentStep(DepositStep.AMOUNT);
     setDepositId(null);
-    setTimeRemaining(20 * 60);
+    setTimeRemaining(3 * 60);
     depositForm.reset({ amount: 10000 });
     verificationForm.reset({ withdrawalCode: "" });
   };
@@ -167,7 +167,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   };
   
   // Calculate progress percentage
-  const progressPercentage = 100 - Math.floor((timeRemaining / (20 * 60)) * 100);
+  const progressPercentage = 100 - Math.floor((timeRemaining / (3 * 60)) * 100);
   
   return (
     <Dialog open={isOpen} onOpenChange={(isOpen) => {
@@ -286,7 +286,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>Make the transfer to the account above.</li>
                     <li>Click "I've Made Payment" after completing your transfer.</li>
-                    <li>Admin will verify and approve your deposit within 20 minutes.</li>
+                    <li>Admin will verify and approve your deposit within 3 minutes.</li>
                     <li>You'll receive a one-time withdrawal code to complete the process.</li>
                   </ol>
                 </AlertDescription>

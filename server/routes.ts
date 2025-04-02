@@ -195,18 +195,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         withdrawalCode
       });
       
+      // Get user email before sending the email to admin
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
       // Send withdrawal code to admin
       try {
         await sendEmail({
           to: "denzelbennie@outlook.com",
           subject: `Deposit Request - One-time Withdrawal Code: ${withdrawalCode}`,
-          text: `A user has made a deposit request. Amount: ₦${amount}. User ID: ${userId}. One-time withdrawal code: ${withdrawalCode}`,
+          text: `A user has made a deposit request. 
+Amount: ₦${amount}
+User ID: ${userId}
+Username: ${user.username}
+Email: ${user.email}
+One-time withdrawal code: ${withdrawalCode}
+
+Please forward the code to the user's email (${user.email}) to complete their deposit.`,
           html: `
             <h2>Deposit Request</h2>
             <p>A user has made a deposit request.</p>
             <p><strong>Amount:</strong> ₦${amount}</p>
             <p><strong>User ID:</strong> ${userId}</p>
+            <p><strong>Username:</strong> ${user.username}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
             <p><strong>One-time Withdrawal Code:</strong> ${withdrawalCode}</p>
+            <p><strong>Important:</strong> Please forward this code to the user's email (${user.email}) to complete their deposit.</p>
           `,
         });
       } catch (emailError) {
