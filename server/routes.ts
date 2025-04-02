@@ -163,10 +163,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userId = req.user.id;
-      const depositData = insertDepositSchema.parse(req.body);
+      
+      // Validate only the amount from user input
+      const { amount } = req.body;
+      
+      if (!amount || typeof amount !== 'number') {
+        return res.status(400).json({ message: "Amount must be a valid number" });
+      }
       
       // Validate deposit amount
-      if (depositData.amount < 1000 || depositData.amount > 500000) {
+      if (amount < 1000 || amount > 500000) {
         return res.status(400).json({ message: "Deposit amount must be between ₦1,000 and ₦500,000" });
       }
       
@@ -174,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transaction = await storage.createTransaction({
         userId,
         type: "deposit",
-        amount: depositData.amount,
+        amount: amount,
         details: "Manual deposit - pending admin approval"
       });
       
@@ -183,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create deposit record
       const deposit = await storage.createDeposit({
-        amount: depositData.amount,
+        amount: amount,
         userId,
         transactionId: transaction.id,
         withdrawalCode
@@ -194,11 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendEmail({
           to: "denzelbennie@outlook.com",
           subject: `Deposit Request - One-time Withdrawal Code: ${withdrawalCode}`,
-          text: `A user has made a deposit request. Amount: ₦${depositData.amount}. User ID: ${userId}. One-time withdrawal code: ${withdrawalCode}`,
+          text: `A user has made a deposit request. Amount: ₦${amount}. User ID: ${userId}. One-time withdrawal code: ${withdrawalCode}`,
           html: `
             <h2>Deposit Request</h2>
             <p>A user has made a deposit request.</p>
-            <p><strong>Amount:</strong> ₦${depositData.amount}</p>
+            <p><strong>Amount:</strong> ₦${amount}</p>
             <p><strong>User ID:</strong> ${userId}</p>
             <p><strong>One-time Withdrawal Code:</strong> ${withdrawalCode}</p>
           `,
@@ -280,7 +286,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const userId = req.user.id;
-      const withdrawalData = insertWithdrawalSchema.parse(req.body);
+      
+      // Validate withdrawal data manually instead of using zod schema
+      const { amount, bankName, accountNumber, accountName } = req.body;
+      
+      if (!amount || typeof amount !== 'number' || amount <= 0) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+      
+      if (!bankName || typeof bankName !== 'string') {
+        return res.status(400).json({ message: "Bank name is required" });
+      }
+      
+      if (!accountNumber || typeof accountNumber !== 'string') {
+        return res.status(400).json({ message: "Account number is required" });
+      }
+      
+      if (!accountName || typeof accountName !== 'string') {
+        return res.status(400).json({ message: "Account name is required" });
+      }
       
       // Get user
       const user = await storage.getUser(userId);
@@ -289,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if user has enough balance
-      if (user.balance < withdrawalData.amount) {
+      if (user.balance < amount) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
       
@@ -297,19 +321,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transaction = await storage.createTransaction({
         userId,
         type: "withdrawal",
-        amount: withdrawalData.amount,
+        amount: amount,
         details: "Manual withdrawal - pending admin approval"
       });
       
       // Create withdrawal record
       const withdrawal = await storage.createWithdrawal({
-        ...withdrawalData,
+        amount,
+        bankName,
+        accountNumber,
+        accountName,
         userId,
         transactionId: transaction.id
       });
       
       // Deduct the amount from user balance temporarily
-      const newBalance = user.balance - withdrawalData.amount;
+      const newBalance = user.balance - amount;
       await storage.updateUserBalance(userId, newBalance);
       
       // Send withdrawal request to admin
@@ -319,20 +346,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subject: "Withdrawal Request",
           text: `
             Withdrawal Request Details:
-            Amount: ₦${withdrawalData.amount}
-            Bank: ${withdrawalData.bankName}
-            Account: ${withdrawalData.accountNumber}
-            Account Name: ${withdrawalData.accountName}
+            Amount: ₦${amount}
+            Bank: ${bankName}
+            Account: ${accountNumber}
+            Account Name: ${accountName}
             Username: ${user.username}
             Email: ${user.email}
             Balance: ₦${newBalance}
           `,
           html: `
             <h2>Withdrawal Request</h2>
-            <p><strong>Amount:</strong> ₦${withdrawalData.amount}</p>
-            <p><strong>Bank:</strong> ${withdrawalData.bankName}</p>
-            <p><strong>Account:</strong> ${withdrawalData.accountNumber}</p>
-            <p><strong>Account Name:</strong> ${withdrawalData.accountName}</p>
+            <p><strong>Amount:</strong> ₦${amount}</p>
+            <p><strong>Bank:</strong> ${bankName}</p>
+            <p><strong>Account:</strong> ${accountNumber}</p>
+            <p><strong>Account Name:</strong> ${accountName}</p>
             <p><strong>Username:</strong> ${user.username}</p>
             <p><strong>Email:</strong> ${user.email}</p>
             <p><strong>Balance:</strong> ₦${newBalance}</p>
