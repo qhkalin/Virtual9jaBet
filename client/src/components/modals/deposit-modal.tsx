@@ -126,6 +126,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // Handle payment made
   const handlePaymentMade = () => {
     setCurrentStep(DepositStep.WAITING);
+    setTimeRemaining(3 * 60); // Ensure we start with full 3 minutes
     
     // Start countdown timer
     const intervalId = setInterval(() => {
