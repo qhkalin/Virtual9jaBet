@@ -4,12 +4,19 @@ import {
   Game, 
   Transaction,
   Deposit,
-  Withdrawal
+  Withdrawal,
+  users,
+  games,
+  transactions,
+  deposits,
+  withdrawals
 } from "@shared/schema";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { db } from "./db";
+import { eq, and, desc, sql } from "drizzle-orm";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User methods
@@ -47,326 +54,184 @@ export interface IStorage {
   getLeaderboard(): Promise<{ userId: number; username: string; totalWinnings: number; gamesPlayed: number; }[]>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private games: Map<number, Game>;
-  private transactions: Map<number, Transaction>;
-  private deposits: Map<number, Deposit>;
-  private withdrawals: Map<number, Withdrawal>;
-  
-  sessionStore: session.SessionStore;
-  currentUserId: number;
-  currentGameId: number;
-  currentTransactionId: number;
-  currentDepositId: number;
-  currentWithdrawalId: number;
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.games = new Map();
-    this.transactions = new Map();
-    this.deposits = new Map();
-    this.withdrawals = new Map();
-    
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // 24 hours
+    this.sessionStore = new PostgresSessionStore({
+      // We use the DATABASE_URL env variable to avoid hardcoding credentials
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
     });
-    
-    this.currentUserId = 1;
-    this.currentGameId = 1;
-    this.currentTransactionId = 1;
-    this.currentDepositId = 1;
-    this.currentWithdrawalId = 1;
-    
-    // Create initial simulated withdrawals for the feed
-    this.createInitialWithdrawals();
-  }
-
-  private createInitialWithdrawals() {
-    const names = [
-      "James", "Sarah", "Emeka", "Fatima", "Oluwole", 
-      "Chioma", "Ahmed", "Ngozi", "Emmanuel", "Aisha", 
-      "Tunde", "Blessing", "Yusuf", "Amina", "Victor"
-    ];
-    
-    const amounts = [
-      5000, 10000, 15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000
-    ];
-    
-    // Create 300+ simulated withdrawals
-    for (let i = 0; i < 300; i++) {
-      const name = names[Math.floor(Math.random() * names.length)];
-      const amount = amounts[Math.floor(Math.random() * amounts.length)];
-      const userId = 1000 + i; // Fake user IDs starting from 1000
-      
-      // Create a simulated user
-      this.users.set(userId, {
-        id: userId,
-        username: `${name}${userId}`,
-        email: `${name.toLowerCase()}${userId}@example.com`,
-        password: "hashed_password",
-        balance: 10000,
-        referralCode: `REF${userId}`,
-        fullName: `${name} User`,
-        hiddenBalance: false,
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-      } as User);
-      
-      // Create a transaction for the withdrawal
-      const transactionId = 10000 + i;
-      this.transactions.set(transactionId, {
-        id: transactionId,
-        userId,
-        type: "withdrawal",
-        amount,
-        status: "completed",
-        details: "Simulated withdrawal",
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000)
-      } as Transaction);
-      
-      // Create a withdrawal record
-      const withdrawalId = 10000 + i;
-      this.withdrawals.set(withdrawalId, {
-        id: withdrawalId,
-        userId,
-        transactionId,
-        amount,
-        bankName: "Bank Name",
-        accountNumber: "1234567890",
-        accountName: `${name} User`,
-        status: "completed",
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000)
-      } as Withdrawal);
-    }
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username.toLowerCase() === username.toLowerCase()
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email.toLowerCase() === email.toLowerCase()
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.referralCode === referralCode
-    );
+    const [user] = await db.select().from(users).where(eq(users.referralCode, referralCode));
+    return user;
   }
 
   async createUser(userData: InsertUser & { referralCode: string, balance: number }): Promise<User> {
-    const id = this.currentUserId++;
-    const now = new Date();
-    const user: User = {
-      ...userData,
-      id,
-      createdAt: now
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(userData).returning();
     return user;
   }
 
   async updateUserBalance(id: number, newBalance: number): Promise<void> {
-    const user = this.users.get(id);
-    if (user) {
-      user.balance = newBalance;
-      this.users.set(id, user);
-    }
+    await db.update(users).set({ balance: newBalance }).where(eq(users.id, id));
   }
 
   async updateUserSettings(id: number, settings: Partial<User>): Promise<User> {
-    const user = this.users.get(id);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    
-    const updatedUser = { ...user, ...settings };
-    this.users.set(id, updatedUser);
+    const [updatedUser] = await db.update(users).set(settings).where(eq(users.id, id)).returning();
     return updatedUser;
   }
 
   async updateUserPassword(id: number, password: string): Promise<void> {
-    const user = this.users.get(id);
-    if (user) {
-      user.password = password;
-      this.users.set(id, user);
-    }
+    await db.update(users).set({ password }).where(eq(users.id, id));
   }
 
   // Game methods
   async createGame(gameData: Omit<Game, "id" | "createdAt">): Promise<Game> {
-    const id = this.currentGameId++;
-    const now = new Date();
-    const game: Game = {
+    const [game] = await db.insert(games).values({
       ...gameData,
-      id,
-      createdAt: now
-    };
-    this.games.set(id, game);
+      createdAt: new Date(),
+    }).returning();
     return game;
   }
 
   async getUserGames(userId: number): Promise<Game[]> {
-    return Array.from(this.games.values())
-      .filter(game => game.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await db.select().from(games).where(eq(games.userId, userId)).orderBy(desc(games.createdAt));
   }
 
   // Transaction methods
   async createTransaction(transactionData: Omit<Transaction, "id" | "createdAt" | "updatedAt">): Promise<Transaction> {
-    const id = this.currentTransactionId++;
     const now = new Date();
-    const transaction: Transaction = {
+    const [transaction] = await db.insert(transactions).values({
       ...transactionData,
-      id,
       createdAt: now,
-      updatedAt: now
-    };
-    this.transactions.set(id, transaction);
+      updatedAt: now,
+    }).returning();
     return transaction;
   }
 
   async getUserTransactions(userId: number): Promise<Transaction[]> {
-    return Array.from(this.transactions.values())
-      .filter(transaction => transaction.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await db.select().from(transactions).where(eq(transactions.userId, userId)).orderBy(desc(transactions.createdAt));
   }
 
   async updateTransactionStatus(id: number, status: string): Promise<void> {
-    const transaction = this.transactions.get(id);
-    if (transaction) {
-      transaction.status = status;
-      transaction.updatedAt = new Date();
-      this.transactions.set(id, transaction);
-    }
+    await db.update(transactions).set({ 
+      status,
+      updatedAt: new Date()
+    }).where(eq(transactions.id, id));
   }
 
   // Deposit methods
   async createDeposit(depositData: Omit<Deposit, "id" | "createdAt" | "updatedAt">): Promise<Deposit> {
-    const id = this.currentDepositId++;
     const now = new Date();
-    const deposit: Deposit = {
+    const [deposit] = await db.insert(deposits).values({
       ...depositData,
-      id,
       createdAt: now,
-      updatedAt: now
-    };
-    this.deposits.set(id, deposit);
+      updatedAt: now,
+    }).returning();
     return deposit;
   }
 
   async getUserDeposits(userId: number): Promise<Deposit[]> {
-    return Array.from(this.deposits.values())
-      .filter(deposit => deposit.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await db.select().from(deposits).where(eq(deposits.userId, userId)).orderBy(desc(deposits.createdAt));
   }
 
   async getDepositByWithdrawalCode(withdrawalCode: string): Promise<Deposit | undefined> {
-    return Array.from(this.deposits.values()).find(
-      (deposit) => deposit.withdrawalCode === withdrawalCode
-    );
+    const [deposit] = await db.select().from(deposits).where(eq(deposits.withdrawalCode, withdrawalCode));
+    return deposit;
   }
 
   async updateDepositStatus(id: number, status: string): Promise<void> {
-    const deposit = this.deposits.get(id);
-    if (deposit) {
-      deposit.status = status;
-      deposit.updatedAt = new Date();
-      this.deposits.set(id, deposit);
-    }
+    await db.update(deposits).set({ 
+      status,
+      updatedAt: new Date()
+    }).where(eq(deposits.id, id));
   }
 
   // Withdrawal methods
   async createWithdrawal(withdrawalData: Omit<Withdrawal, "id" | "createdAt" | "updatedAt">): Promise<Withdrawal> {
-    const id = this.currentWithdrawalId++;
     const now = new Date();
-    const withdrawal: Withdrawal = {
+    const [withdrawal] = await db.insert(withdrawals).values({
       ...withdrawalData,
-      id,
       createdAt: now,
-      updatedAt: now
-    };
-    this.withdrawals.set(id, withdrawal);
+      updatedAt: now,
+    }).returning();
     return withdrawal;
   }
 
   async getUserWithdrawals(userId: number): Promise<Withdrawal[]> {
-    return Array.from(this.withdrawals.values())
-      .filter(withdrawal => withdrawal.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return await db.select().from(withdrawals).where(eq(withdrawals.userId, userId)).orderBy(desc(withdrawals.createdAt));
   }
 
   async getRecentWithdrawals(): Promise<(Withdrawal & { username: string })[]> {
-    // Get all completed withdrawals
-    const completedWithdrawals = Array.from(this.withdrawals.values())
-      .filter(withdrawal => withdrawal.status === "completed")
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    
-    // Attach username to each withdrawal
-    return completedWithdrawals.map(withdrawal => {
-      const user = this.users.get(withdrawal.userId);
-      return {
-        ...withdrawal,
-        username: user ? user.username : "Unknown User"
-      };
-    });
+    const result = await db
+      .select({
+        id: withdrawals.id,
+        userId: withdrawals.userId,
+        amount: withdrawals.amount,
+        status: withdrawals.status,
+        bankName: withdrawals.bankName,
+        accountNumber: withdrawals.accountNumber,
+        accountName: withdrawals.accountName,
+        createdAt: withdrawals.createdAt,
+        updatedAt: withdrawals.updatedAt,
+        username: users.username
+      })
+      .from(withdrawals)
+      .innerJoin(users, eq(withdrawals.userId, users.id))
+      .where(eq(withdrawals.status, "completed"))
+      .orderBy(desc(withdrawals.createdAt))
+      .limit(10);
+      
+    return result;
   }
 
   async updateWithdrawalStatus(id: number, status: string): Promise<void> {
-    const withdrawal = this.withdrawals.get(id);
-    if (withdrawal) {
-      withdrawal.status = status;
-      withdrawal.updatedAt = new Date();
-      this.withdrawals.set(id, withdrawal);
-    }
+    await db.update(withdrawals).set({ 
+      status,
+      updatedAt: new Date()
+    }).where(eq(withdrawals.id, id));
   }
 
   // Leaderboard methods
   async getLeaderboard(): Promise<{ userId: number; username: string; totalWinnings: number; gamesPlayed: number; }[]> {
-    // Get all users
-    const users = Array.from(this.users.values());
-    
-    // Initialize leaderboard entries
-    const leaderboardEntries: Map<number, { userId: number; username: string; totalWinnings: number; gamesPlayed: number; }> = new Map();
-    
-    // Calculate total winnings and games played for each user
-    for (const user of users) {
-      const userGames = await this.getUserGames(user.id);
-      const gamesPlayed = userGames.length;
+    const result = await db
+      .select({
+        userId: games.userId,
+        username: users.username,
+        totalWinnings: sql<number>`sum(CASE WHEN ${games.won} = true THEN ${games.winAmount} ELSE 0 END)`,
+        gamesPlayed: sql<number>`count(${games.id})`
+      })
+      .from(games)
+      .innerJoin(users, eq(games.userId, users.id))
+      .groupBy(games.userId, users.username)
+      .orderBy(desc(sql`sum(CASE WHEN ${games.won} = true THEN ${games.winAmount} ELSE 0 END)`))
+      .limit(10);
       
-      if (gamesPlayed === 0) continue;
-      
-      const totalWinnings = userGames
-        .filter(game => game.isWin)
-        .reduce((sum, game) => sum + (game.winAmount || 0), 0);
-      
-      leaderboardEntries.set(user.id, {
-        userId: user.id,
-        username: user.username,
-        totalWinnings,
-        gamesPlayed
-      });
-    }
-    
-    // Sort by total winnings (descending)
-    return Array.from(leaderboardEntries.values())
-      .sort((a, b) => b.totalWinnings - a.totalWinnings)
-      .slice(0, 10); // Get top 10
+    return result;
   }
 }
 
-export const storage = new MemStorage();
+// Use the DatabaseStorage implementation
+export const storage = new DatabaseStorage();
