@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,11 +46,62 @@ interface DepositModalProps {
   onClose: () => void;
 }
 
+// Define the deposit state interface for localStorage
+interface DepositState {
+  step: DepositStep;
+  depositId: number | null;
+  timeRemaining: number;
+  amount: number;
+  expiryTime: number; // Timestamp when the countdown should end
+}
+
 export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<DepositStep>(DepositStep.AMOUNT);
   const [depositId, setDepositId] = useState<number | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState(3 * 60); // 3 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(60); // 1 minute in seconds (changed from 3 to 1)
+  
+  // Load deposit state from localStorage on component mount
+  useEffect(() => {
+    const loadSavedState = () => {
+      try {
+        const savedState = localStorage.getItem('depositState');
+        if (savedState) {
+          const parsedState: DepositState = JSON.parse(savedState);
+          
+          // Check if state is still valid (not expired)
+          if (parsedState.expiryTime > Date.now()) {
+            setCurrentStep(parsedState.step);
+            setDepositId(parsedState.depositId);
+            
+            // Calculate remaining time
+            const newTimeRemaining = Math.max(0, Math.floor((parsedState.expiryTime - Date.now()) / 1000));
+            setTimeRemaining(newTimeRemaining);
+            
+            if (parsedState.step === DepositStep.WAITING && newTimeRemaining > 0) {
+              // Auto-start the countdown (needs to be done after state is fully loaded)
+              setTimeout(() => startCountdown(), 0);
+            } else if (parsedState.step === DepositStep.WAITING && newTimeRemaining <= 0) {
+              // Timer expired, move to verification step
+              setCurrentStep(DepositStep.VERIFICATION);
+            }
+            
+            // Set amount in the form
+            depositForm.setValue('amount', parsedState.amount);
+          } else {
+            // Clear expired state
+            localStorage.removeItem('depositState');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading deposit state from localStorage', error);
+        localStorage.removeItem('depositState');
+      }
+    };
+    
+    // Delay the loading of saved state to ensure form is fully initialized
+    setTimeout(loadSavedState, 0);
+  }, []);
   
   // Deposit form
   const depositForm = useForm<z.infer<typeof depositSchema>>({
@@ -77,6 +128,16 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     onSuccess: (data) => {
       setDepositId(data.id);
       setCurrentStep(DepositStep.PAYMENT_DETAILS);
+      
+      // Save deposit ID to localStorage
+      localStorage.setItem('depositState', JSON.stringify({
+        step: DepositStep.PAYMENT_DETAILS,
+        depositId: data.id,
+        timeRemaining: 60,
+        amount: depositForm.getValues().amount,
+        expiryTime: Date.now() + 60000 // 1 minute
+      }));
+      
       toast({
         title: "Deposit created",
         description: "Please transfer the deposit amount to the company account.",
@@ -99,6 +160,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Clear deposit state from localStorage
+      localStorage.removeItem('depositState');
       
       toast({
         title: "Deposit successful",
@@ -123,22 +187,60 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     createDepositMutation.mutate(data);
   };
   
-  // Handle payment made
-  const handlePaymentMade = () => {
-    setCurrentStep(DepositStep.WAITING);
-    setTimeRemaining(3 * 60); // Ensure we start with full 3 minutes
-    
-    // Start countdown timer
+  // Start countdown function
+  const startCountdown = () => {
     const intervalId = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(intervalId);
           setCurrentStep(DepositStep.VERIFICATION);
+          
+          // Update localStorage
+          const currentState = JSON.parse(localStorage.getItem('depositState') || '{}');
+          localStorage.setItem('depositState', JSON.stringify({
+            ...currentState,
+            step: DepositStep.VERIFICATION,
+            timeRemaining: 0
+          }));
+          
           return 0;
         }
+        
+        // Update localStorage with new time
+        const currentState = JSON.parse(localStorage.getItem('depositState') || '{}');
+        if (currentState.step === DepositStep.WAITING) {
+          localStorage.setItem('depositState', JSON.stringify({
+            ...currentState,
+            timeRemaining: prev - 1
+          }));
+        }
+        
         return prev - 1;
       });
     }, 1000);
+    
+    return intervalId;
+  };
+  
+  // Handle payment made
+  const handlePaymentMade = () => {
+    // Set to 1 minute as requested (instead of 3)
+    const countdownDuration = 60; // 1 minute in seconds
+    setTimeRemaining(countdownDuration);
+    setCurrentStep(DepositStep.WAITING);
+    
+    // Save state to localStorage
+    const expiryTime = Date.now() + (countdownDuration * 1000);
+    localStorage.setItem('depositState', JSON.stringify({
+      step: DepositStep.WAITING,
+      depositId,
+      timeRemaining: countdownDuration,
+      amount: depositForm.getValues().amount,
+      expiryTime
+    }));
+    
+    // Start countdown
+    startCountdown();
     
     toast({
       title: "Payment notification sent",
@@ -153,11 +255,26 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   
   // Reset state when modal closes
   const resetState = () => {
+    // Only reset if not in waiting or verification steps
+    const savedState = localStorage.getItem('depositState');
+    if (savedState) {
+      const parsedState: DepositState = JSON.parse(savedState);
+      if (parsedState.step === DepositStep.WAITING && parsedState.expiryTime > Date.now()) {
+        // Don't reset if deposit is still pending
+        return;
+      }
+    }
+    
     setCurrentStep(DepositStep.AMOUNT);
     setDepositId(null);
-    setTimeRemaining(3 * 60);
+    setTimeRemaining(60); // 1 minute
     depositForm.reset({ amount: 10000 });
     verificationForm.reset({ withdrawalCode: "" });
+    
+    // Remove from localStorage if completing the process
+    if (currentStep === DepositStep.VERIFICATION) {
+      localStorage.removeItem('depositState');
+    }
   };
   
   // Format time remaining
@@ -168,7 +285,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   };
   
   // Calculate progress percentage
-  const progressPercentage = 100 - Math.floor((timeRemaining / (3 * 60)) * 100);
+  const progressPercentage = 100 - Math.floor((timeRemaining / 60) * 100);
   
   return (
     <Dialog open={isOpen} onOpenChange={(isOpen) => {
@@ -287,7 +404,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>Make the transfer to the account above.</li>
                     <li>Click "I've Made Payment" after completing your transfer.</li>
-                    <li>Admin will verify and approve your deposit within 3 minutes.</li>
+                    <li>Admin will verify and approve your deposit within 1 minute.</li>
                     <li>You'll receive a one-time withdrawal code to complete the process.</li>
                   </ol>
                 </AlertDescription>
