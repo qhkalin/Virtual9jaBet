@@ -16,9 +16,17 @@ import { useTheme } from "@/hooks/use-dark-mode";
 export default function Header() {
   const { user, logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
-  const { setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Safely use theme, with fallback if context is not available
+  let themeContext;
+  try {
+    themeContext = useTheme();
+  } catch (error) {
+    themeContext = { theme: 'dark', setTheme: () => {} };
+  }
+  const { setTheme } = themeContext;
 
   // Change header style on scroll
   useEffect(() => {
