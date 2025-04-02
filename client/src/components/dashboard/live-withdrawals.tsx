@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { User } from "lucide-react";
 
 type Withdrawal = {
   id: number;
@@ -23,10 +24,24 @@ export default function LiveWithdrawals() {
 
   // When withdrawals are loaded, set up the animated list
   useEffect(() => {
-    if (!withdrawals) return;
+    if (!withdrawals || withdrawals.length === 0) {
+      // Create demo withdrawals if none are available to showcase the animation
+      const demoWithdrawals: Withdrawal[] = [
+        { id: 1, username: "Username1", amount: 35000, createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
+        { id: 2, username: "Username2", amount: 20000, createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+        { id: 3, username: "Username3", amount: 50000, createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString() },
+        { id: 4, username: "Username4", amount: 15000, createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
+        { id: 5, username: "Username5", amount: 28000, createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString() }
+      ];
+      
+      // Make a repeating list for the infinite scroll effect with demo data
+      const repeatedWithdrawals = [...demoWithdrawals, ...demoWithdrawals, ...demoWithdrawals];
+      setAnimatedWithdrawals(repeatedWithdrawals);
+      return;
+    }
     
     // Make a repeating list for the infinite scroll effect
-    const repeatedWithdrawals = [...withdrawals, ...withdrawals];
+    const repeatedWithdrawals = [...withdrawals, ...withdrawals, ...withdrawals];
     setAnimatedWithdrawals(repeatedWithdrawals);
   }, [withdrawals]);
 
@@ -92,7 +107,7 @@ export default function LiveWithdrawals() {
               {animatedWithdrawals.map((withdrawal, index) => (
                 <div key={`${withdrawal.id}-${index}`} className="flex items-center space-x-3 border-b border-gray-800 py-3">
                   <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#FFD700]">
-                    <i className="fas fa-user"></i>
+                    <User size={18} />
                   </div>
                   <div className="flex-grow">
                     <div className="flex justify-between">

@@ -34,4 +34,20 @@
     color: #0E2E5C;
     @apply font-bold hover:brightness-110 transition-all;
   }
+  
+  /* Auto-scrolling marquee animation for live withdrawals */
+  @keyframes marquee {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-33.33%);
+    }
+  }
+  
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+    height: auto;
+    padding: 1rem 0;
+  }
 }

@@ -97,7 +97,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: transactionType,
         amount: transactionAmount,
-        status: "completed",
         details: `Game #${game.id} - ${isWin ? 'Win' : 'Loss'}`
       });
       
@@ -176,8 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: "deposit",
         amount: depositData.amount,
-        details: "Manual deposit - pending admin approval",
-        status: "pending"
+        details: "Manual deposit - pending admin approval"
       });
       
       // Generate one-time withdrawal code
@@ -188,8 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: depositData.amount,
         userId,
         transactionId: transaction.id,
-        withdrawalCode,
-        status: "pending"
+        withdrawalCode
       });
       
       // Send withdrawal code to admin
@@ -301,7 +298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: "withdrawal",
         amount: withdrawalData.amount,
-        status: "pending",
         details: "Manual withdrawal - pending admin approval"
       });
       
@@ -309,8 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const withdrawal = await storage.createWithdrawal({
         ...withdrawalData,
         userId,
-        transactionId: transaction.id,
-        status: "pending"
+        transactionId: transaction.id
       });
       
       // Deduct the amount from user balance temporarily

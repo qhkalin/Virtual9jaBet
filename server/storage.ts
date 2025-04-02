@@ -34,18 +34,18 @@ export interface IStorage {
   getUserGames(userId: number): Promise<Game[]>;
   
   // Transaction methods
-  createTransaction(transaction: Omit<Transaction, "id" | "createdAt" | "updatedAt">): Promise<Transaction>;
+  createTransaction(transaction: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "status">): Promise<Transaction>;
   getUserTransactions(userId: number): Promise<Transaction[]>;
   updateTransactionStatus(id: number, status: string): Promise<void>;
   
   // Deposit methods
-  createDeposit(deposit: Omit<Deposit, "id" | "createdAt" | "updatedAt">): Promise<Deposit>;
+  createDeposit(deposit: Omit<Deposit, "id" | "createdAt" | "updatedAt" | "status">): Promise<Deposit>;
   getUserDeposits(userId: number): Promise<Deposit[]>;
   getDepositByWithdrawalCode(withdrawalCode: string): Promise<Deposit | undefined>;
   updateDepositStatus(id: number, status: string): Promise<void>;
   
   // Withdrawal methods
-  createWithdrawal(withdrawal: Omit<Withdrawal, "id" | "createdAt" | "updatedAt">): Promise<Withdrawal>;
+  createWithdrawal(withdrawal: Omit<Withdrawal, "id" | "createdAt" | "updatedAt" | "status">): Promise<Withdrawal>;
   getUserWithdrawals(userId: number): Promise<Withdrawal[]>;
   getRecentWithdrawals(): Promise<(Withdrawal & { username: string })[]>;
   updateWithdrawalStatus(id: number, status: string): Promise<void>;
@@ -159,7 +159,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserSettings(id: number, settings: Partial<User>): Promise<User> {
-    const [updatedUser] = await db.update(users).set(settings).where(eq(users.id, id)).returning();
+    // Only update the fields that are actually provided
+    const validSettings: Record<string, any> = {};
+    
+    // Only allow certain fields to be updated for safety
+    const allowedFields = ['fullName', 'email', 'hiddenBalance', 'bankName', 'accountNumber', 'accountName', 'withdrawalCode'];
+    
+    Object.keys(settings).forEach(key => {
+      if (settings[key as keyof User] !== undefined && allowedFields.includes(key)) {
+        validSettings[key] = settings[key as keyof User];
+      }
+    });
+    
+    const [updatedUser] = await db.update(users)
+      .set(validSettings)
+      .where(eq(users.id, id))
+      .returning();
+      
     return updatedUser;
   }
 
@@ -181,7 +197,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Transaction methods
-  async createTransaction(transactionData: Omit<Transaction, "id" | "createdAt" | "updatedAt">): Promise<Transaction> {
+  async createTransaction(transactionData: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "status">): Promise<Transaction> {
     const now = new Date();
     const [transaction] = await db.insert(transactions).values({
       ...transactionData,
@@ -203,7 +219,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Deposit methods
-  async createDeposit(depositData: Omit<Deposit, "id" | "createdAt" | "updatedAt">): Promise<Deposit> {
+  async createDeposit(depositData: Omit<Deposit, "id" | "createdAt" | "updatedAt" | "status">): Promise<Deposit> {
     const now = new Date();
     const [deposit] = await db.insert(deposits).values({
       ...depositData,
@@ -230,7 +246,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Withdrawal methods
-  async createWithdrawal(withdrawalData: Omit<Withdrawal, "id" | "createdAt" | "updatedAt">): Promise<Withdrawal> {
+  async createWithdrawal(withdrawalData: Omit<Withdrawal, "id" | "createdAt" | "updatedAt" | "status">): Promise<Withdrawal> {
     const now = new Date();
     const [withdrawal] = await db.insert(withdrawals).values({
       ...withdrawalData,
