@@ -56,11 +56,7 @@ export default function Header() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center">
-              <span className="font-heading font-bold text-2xl">
-                <span className="text-[#FFD700]">Virtual</span>
-                <span className="text-white">9ja</span>
-                <span className="text-[#FFD700]">Bet</span>
-              </span>
+              <img src="/logo.svg" alt="Virtual9jaBet Logo" className="h-10 mr-2" />
             </Link>
           </div>
           

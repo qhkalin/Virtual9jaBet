@@ -67,10 +67,7 @@ export default function AuthPage() {
       {/* Header */}
       <header className="w-full py-4 px-6">
         <div className="text-center sm:text-left">
-          <h1 className="text-3xl sm:text-4xl font-bold">
-            <span className="text-[#FFD700]">Virtual</span>9ja
-            <span className="text-[#FFD700]">Bet</span>
-          </h1>
+          <img src="/logo.svg" alt="Virtual9jaBet Logo" className="h-14 inline-block" />
         </div>
       </header>
       
@@ -312,10 +309,7 @@ export default function AuthPage() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h3 className="text-xl font-bold mb-4">
-                <span className="text-[#FFD700]">Virtual</span>9ja
-                <span className="text-[#FFD700]">Bet</span>
-              </h3>
+              <img src="/logo.svg" alt="Virtual9jaBet Logo" className="h-8 mb-3" />
               <p className="text-gray-300 text-sm">The premier online betting platform in Nigeria.</p>
             </div>
             <div>
