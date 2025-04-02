@@ -13,9 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
-  const [activeTab, setActiveTab] = useState("login");
+  
+  // Check URL for tab parameter
+  const searchParams = new URLSearchParams(location.split('?')[1]);
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam === 'register' ? 'register' : 'login');
 
   // Redirect if already logged in
   useEffect(() => {
@@ -55,12 +59,23 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{
+    <div className="min-h-screen flex flex-col justify-between p-4" style={{
       backgroundColor: "#0E2E5C",
       backgroundImage: "linear-gradient(to bottom, #0E2E5C, #071834)",
       backgroundAttachment: "fixed"
     }}>
-      <div className="container max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Header */}
+      <header className="w-full py-4 px-6">
+        <div className="text-center sm:text-left">
+          <h1 className="text-3xl sm:text-4xl font-bold">
+            <span className="text-[#FFD700]">Virtual</span>9ja
+            <span className="text-[#FFD700]">Bet</span>
+          </h1>
+        </div>
+      </header>
+      
+      {/* Main Content */}
+      <div className="container max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8 flex-grow flex items-center justify-center">
         <div className="flex items-center justify-center">
           <Tabs 
             defaultValue={activeTab} 
@@ -291,6 +306,41 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <footer className="w-full py-6 mt-8 border-t border-[#2D5599]">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="text-xl font-bold mb-4">
+                <span className="text-[#FFD700]">Virtual</span>9ja
+                <span className="text-[#FFD700]">Bet</span>
+              </h3>
+              <p className="text-gray-300 text-sm">The premier online betting platform in Nigeria.</p>
+            </div>
+            <div>
+              <h4 className="text-white font-medium mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/auth" className="text-gray-300 hover:text-[#FFD700]">Login</a></li>
+                <li><a href="/auth?tab=register" className="text-gray-300 hover:text-[#FFD700]">Register</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#FFD700]">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-[#FFD700]">Privacy Policy</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-medium mb-4">Contact Us</h4>
+              <ul className="space-y-2 text-sm">
+                <li className="text-gray-300">Email: support@virtual9jabet.com</li>
+                <li className="text-gray-300">Phone: +234 800 VIRTUAL</li>
+                <li className="text-gray-300">Address: Lagos, Nigeria</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 text-center">
+            <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Virtual9jaBet. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
