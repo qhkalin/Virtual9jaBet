@@ -14,6 +14,7 @@ export function useSpinGame() {
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [winAmount, setWinAmount] = useState<number | null>(null);
+  const [spinError, setSpinError] = useState<string | null>(null);
 
   // Spin game mutation
   const spinMutation = useMutation({
@@ -39,50 +40,63 @@ export function useSpinGame() {
       }, 5000); // Same as spin animation duration
     },
     onError: (error: Error) => {
+      const errorMessage = error.message;
       toast({
         title: "Spin failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
+      setSpinError(errorMessage);
       setIsSpinning(false);
     },
   });
 
   // Handle spin action
   const handleSpin = () => {
+    // Clear any previous errors
+    setSpinError(null);
+    
     if (!user) {
+      const errorMessage = "Please log in to play the game";
       toast({
         title: "Not logged in",
-        description: "Please log in to play the game",
+        description: errorMessage,
         variant: "destructive",
       });
+      setSpinError(errorMessage);
       return;
     }
 
     if (!selectedNumber) {
+      const errorMessage = "Please select a number to bet on";
       toast({
         title: "Select a number",
-        description: "Please select a number to bet on",
+        description: errorMessage,
         variant: "destructive",
       });
+      setSpinError(errorMessage);
       return;
     }
 
     if (betAmount <= 0) {
+      const errorMessage = "Please enter a valid bet amount";
       toast({
         title: "Invalid bet amount",
-        description: "Please enter a valid bet amount",
+        description: errorMessage,
         variant: "destructive",
       });
+      setSpinError(errorMessage);
       return;
     }
 
     if (betAmount > (user.balance || 0)) {
+      const errorMessage = `Your current balance is ₦${user.balance?.toLocaleString() || 0}`;
       toast({
         title: "Insufficient balance",
-        description: `Your current balance is ₦${user.balance?.toLocaleString() || 0}`,
+        description: errorMessage,
         variant: "destructive",
       });
+      setSpinError(errorMessage);
       return;
     }
 
@@ -96,6 +110,7 @@ export function useSpinGame() {
     setShowWinModal(false);
     setShowLoseModal(false);
     setWinAmount(null);
+    setSpinError(null);
   };
 
   return {
@@ -112,5 +127,7 @@ export function useSpinGame() {
     setShowWinModal,
     setShowLoseModal,
     winAmount,
+    spinError,
+    setSpinError,
   };
 }

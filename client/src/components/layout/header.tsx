@@ -51,9 +51,9 @@ export default function Header() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full ${isScrolled ? 'shadow-lg' : ''} transition-all duration-200`}>
-      <div style={{ backgroundColor: '#0E2E5C' }}>
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className={`sticky top-0 z-50 w-full ${isScrolled ? 'shadow-lg' : ''} transition-all duration-200`} style={{ height: '100%' }}>
+      <div style={{ backgroundColor: '#0E2E5C', height: '100%' }}>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center">
               <span className="font-heading font-bold text-2xl">

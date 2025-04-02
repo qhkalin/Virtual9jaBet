@@ -70,22 +70,82 @@ export class DatabaseStorage implements IStorage {
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      password: users.password,
+      balance: users.balance,
+      fullName: users.fullName,
+      referralCode: users.referralCode,
+      referredBy: users.referredBy,
+      hiddenBalance: users.hiddenBalance,
+      bankName: users.bankName,
+      accountNumber: users.accountNumber,
+      accountName: users.accountName,
+      withdrawalCode: users.withdrawalCode,
+      createdAt: users.createdAt
+    }).from(users).where(eq(users.id, id));
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      password: users.password,
+      balance: users.balance,
+      fullName: users.fullName,
+      referralCode: users.referralCode,
+      referredBy: users.referredBy,
+      hiddenBalance: users.hiddenBalance,
+      bankName: users.bankName,
+      accountNumber: users.accountNumber,
+      accountName: users.accountName,
+      withdrawalCode: users.withdrawalCode,
+      createdAt: users.createdAt
+    }).from(users).where(eq(users.username, username));
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const [user] = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      password: users.password,
+      balance: users.balance,
+      fullName: users.fullName,
+      referralCode: users.referralCode,
+      referredBy: users.referredBy,
+      hiddenBalance: users.hiddenBalance,
+      bankName: users.bankName,
+      accountNumber: users.accountNumber,
+      accountName: users.accountName,
+      withdrawalCode: users.withdrawalCode,
+      createdAt: users.createdAt
+    }).from(users).where(eq(users.email, email));
     return user;
   }
 
   async getUserByReferralCode(referralCode: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.referralCode, referralCode));
+    const [user] = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      password: users.password,
+      balance: users.balance,
+      fullName: users.fullName,
+      referralCode: users.referralCode,
+      referredBy: users.referredBy,
+      hiddenBalance: users.hiddenBalance,
+      bankName: users.bankName,
+      accountNumber: users.accountNumber,
+      accountName: users.accountName,
+      withdrawalCode: users.withdrawalCode,
+      createdAt: users.createdAt
+    }).from(users).where(eq(users.referralCode, referralCode));
     return user;
   }
 
@@ -189,6 +249,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: withdrawals.id,
         userId: withdrawals.userId,
+        transactionId: withdrawals.transactionId,
         amount: withdrawals.amount,
         status: withdrawals.status,
         bankName: withdrawals.bankName,
@@ -220,13 +281,13 @@ export class DatabaseStorage implements IStorage {
       .select({
         userId: games.userId,
         username: users.username,
-        totalWinnings: sql<number>`sum(CASE WHEN ${games.won} = true THEN ${games.winAmount} ELSE 0 END)`,
+        totalWinnings: sql<number>`sum(CASE WHEN ${games.isWin} = true THEN ${games.winAmount} ELSE 0 END)`,
         gamesPlayed: sql<number>`count(${games.id})`
       })
       .from(games)
       .innerJoin(users, eq(games.userId, users.id))
       .groupBy(games.userId, users.username)
-      .orderBy(desc(sql`sum(CASE WHEN ${games.won} = true THEN ${games.winAmount} ELSE 0 END)`))
+      .orderBy(desc(sql`sum(CASE WHEN ${games.isWin} = true THEN ${games.winAmount} ELSE 0 END)`))
       .limit(10);
       
     return result;

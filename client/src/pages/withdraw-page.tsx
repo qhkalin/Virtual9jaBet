@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/layout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useLocation } from "wouter";
 
 // Withdrawal schema
 const withdrawalSchema = z.object({
@@ -28,6 +29,24 @@ export default function WithdrawPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isPending, setIsPending] = useState(false);
+  const [showInsufficientFundsMessage, setShowInsufficientFundsMessage] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+  const [, navigate] = useLocation();
+  
+  // Redirect to deposit page if user has insufficient funds
+  useEffect(() => {
+    if (showInsufficientFundsMessage) {
+      const timer = setTimeout(() => {
+        if (redirectCountdown > 1) {
+          setRedirectCountdown(redirectCountdown - 1);
+        } else {
+          navigate('/deposit');
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showInsufficientFundsMessage, redirectCountdown, navigate]);
   
   // Get user saved bank details
   const { data: transactions } = useQuery<any[]>({
@@ -93,6 +112,10 @@ export default function WithdrawPage() {
         description: `Your current balance is ₦${user.balance?.toLocaleString() || 0}`,
         variant: "destructive",
       });
+      
+      // Show insufficient funds message and start countdown to redirect
+      setShowInsufficientFundsMessage(true);
+      setRedirectCountdown(5);
       return;
     }
     
@@ -103,6 +126,23 @@ export default function WithdrawPage() {
     <Layout>
       <div className="container max-w-xl py-8">
         <h1 className="text-3xl font-bold mb-6">Withdraw Funds</h1>
+        
+        {showInsufficientFundsMessage && (
+          <Alert className="mb-6 bg-red-900/30 border-red-600 animate-pulse">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
+            <AlertTitle className="text-red-400 text-lg font-bold">Insufficient Funds</AlertTitle>
+            <AlertDescription className="text-white">
+              <p className="mb-2 text-base">
+                You need to make a deposit to your account between <span className="font-bold text-yellow-400">₦1,000 - ₦500,000</span> before you can withdraw.
+              </p>
+              <div className="mt-3 p-2 bg-red-950/50 rounded-md border border-red-700 text-center">
+                <span className="font-medium text-red-300">
+                  Redirecting to deposit page in <span className="font-bold text-white text-lg">{redirectCountdown}</span> seconds...
+                </span>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         
         {pendingWithdrawals.length > 0 && (
           <Alert className="mb-6 bg-yellow-900/20 border-yellow-700">
