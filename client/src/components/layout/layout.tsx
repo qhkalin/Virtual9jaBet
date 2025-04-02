@@ -17,7 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const showSidebar = user && location !== "/auth";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="app-container flex flex-col min-h-screen text-foreground">
       <Header />
       
       <div className={`flex-grow flex ${showSidebar ? 'md:ml-0' : ''}`}>
@@ -27,7 +27,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         )}
         
-        <main className="flex-grow">
+        <main className="flex-grow px-4 py-3 md:px-8">
           {children}
         </main>
       </div>

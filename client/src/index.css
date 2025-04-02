@@ -8,6 +8,30 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
+    background-color: #0E2E5C;
+  }
+  
+  .app-container {
+    @apply min-h-screen;
+    background-color: #0E2E5C;
+    background-image: linear-gradient(to bottom, #0E2E5C, #071834);
+  }
+  
+  .game-container {
+    @apply rounded-xl p-6 my-6;
+    background-color: rgba(20, 54, 104, 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  
+  .accent-text {
+    @apply font-bold;
+    color: #FFD700;
+  }
+  
+  .btn-primary {
+    background-color: #FFD700;
+    color: #0E2E5C;
+    @apply font-bold hover:brightness-110 transition-all;
   }
 }
